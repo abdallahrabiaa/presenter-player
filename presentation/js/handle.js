@@ -1,4 +1,4 @@
-const API_URI = 'http://localhost:4000';
+const API_URI = `http://${window.location.hostname}:4000`;
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
     baseURL: API_URI,
