@@ -13,18 +13,14 @@
 	<link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.25.0/axios.min.js"
-		integrity="sha512-/Q6t3CASm04EliI1QyIDAA/nDo9R8FQ/BULoUFyN4n/BDdyIxeH7u++Z+eobdmr11gG5D/6nPFyDlnisDwhpYA=="
-		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="node_modules/axios/dist/axios.min.js"></script>
 	<!-- Theme used for syntax highlighted code -->
 	<link rel="stylesheet" href="plugin/highlight/monokai.css">
 	<script src="node_modules/reveal.js-menu/menu.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.js"
-		integrity="sha512-is1ls2rgwpFZyixqKFEExPHVUUL+pPkBEPw47s/6NDQ4n1m6T/ySeDW3p54jp45z2EJ0RSOgilqee1WhtelXfA=="
-		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<script src="https://cdn.socket.io/4.4.1/socket.io.min.js"
-		integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H"
-		crossorigin="anonymous"></script>
+	<script src="node_modules/qrcodejs/qrcode.min.js"></script>
+	<script src="node_modules/"></script>
+
+	<script type="text/javascript" src="node_modules/socket.io-client/dist/socket.io.min.js"></script>
 	<script defer src="js/handle.js"></script>
 
 </head>
@@ -41,10 +37,16 @@
 	<script src="plugin/highlight/highlight.js"></script>
 
 	<script>
-		// More info about initialization & config:
-		// - https://revealjs.com/initialization/
-		// - https://revealjs.com/config/
-
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./sw.js')
+					.then((reg) => console.log('Success: ', reg.scope))
+					.catch((err) => console.log('Failure: ', err));
+				navigator.serviceWorker.register('./workbox-7c08ef38.js.js')
+					.then((reg) => console.log('Success: ', reg.scope))
+					.catch((err) => console.log('Failure: ', err));
+			})
+		}
 	</script>
 </body>
 

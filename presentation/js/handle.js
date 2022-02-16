@@ -43,7 +43,7 @@ async function getPresentation(ID) {
         }
         await Reveal.initialize({
             hash: false,
-            autoPlayMedia: true,
+            autoPlayMedia: false,
             slideNumber: true,
             help: true,
 
@@ -58,12 +58,14 @@ async function getPresentation(ID) {
         slidesParent.append(NameSection)
         if (err.response) {
             console.error(err.response);
+
         }
+        alert(err.message)
         console.error(err)
     }
     await Reveal.initialize({
         hash: false,
-        autoPlayMedia: true,
+        autoPlayMedia: false,
         slideNumber: true,
         help: true,
 
@@ -74,117 +76,158 @@ async function getPresentation(ID) {
 
 }
 async function visualizeSlides(slides) {
-    if (!slides.length) return;
+    try {
+        if (!slides.length) return;
 
-    for (let slide of slides) {
-        const slideSection = document.createElement('section');
-        const h4 = document.createElement('h4');
-        if (slide.name) {
-            h4.innerText = slide.name;
-            slideSection.appendChild(h4);
-        }
-        if (slide.type === 'image') {
-            slideSection.setAttribute('data-background-image', API_URI + "/" + slide.path);
-        }
-        else if (slide.type === 'video') {
-            const video = document.createElement('video');
-            video.src = API_URI + "/" + slide.path;
-            video.controls = true
-
-            slideSection.appendChild(video);
-
-
-        }
-        else if (slide.type === 'audio') {
-            const audio = document.createElement('audio');
-            audio.controls = true;
-            audio.src = API_URI + "/" + slide.path;
-            slideSection.appendChild(audio);
-
-
-        }
-        else if (slide.type === 'html') {
-            slideSection.setAttribute('data-background-iframe', API_URI + "/" + slide.path);
-
-        }
-        else if (slide.type === 'question') {
-            let isVoted = false;
-            const VotingSection = document.createElement('section');
-            VotingSection.setAttribute('id', "votingSection")
-            const qr = document.createElement('div');
-            const ul = document.createElement('ul');
-            const select = document.createElement('select');
-            const form = document.createElement('form');
-            const submitButton = document.createElement('input');
-            submitButton.type = 'submit';
-            submitButton.
-                setAttribute('class', "py-2 px-4  bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white ml-2 transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2  rounded-lg")
-            form.append(select);
-            select.setAttribute('class', " w-52 text-gray-700  border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500")
-            for (let opt of slide.options) {
-                const option = document.createElement('option');
-                option.setAttribute('value', opt);
-                option.innerHTML = opt;
-                select.append(option);
+        for (let slide of slides) {
+            const slideSection = document.createElement('section');
+            const h4 = document.createElement('h4');
+            if (slide.name && slide.type !== "html") {
+                h4.innerText = slide.name;
+                slideSection.appendChild(h4);
             }
-            form.append(submitButton)
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (isVoted) return alert("already voted !");
-                const value = select.value;
-                const res = await axios.get(API_URI + questionPath + `-answer/${slide._id}?answer=${value}&token=${token}`);
-                const { data } = res;
-                console.log(data);
-                if (data.success) isVoted = true;
-                alert(data.message);
+            if (slide.type === 'image') {
+                slideSection.setAttribute('data-background-image', API_URI + "/" + slide.path);
+            }
+            else if (slide.type === 'video') {
+                const video = document.createElement('video');
+                video.src = API_URI + "/" + slide.path;
+                video.controls = true
 
-            })
-            slideSection.appendChild(form)
-            qr.style.display = "inline-block"
-            new QRCode(qr, `${FRONTEND_URI}/question?ID=${slide._id}&token=${token}`)
-            slideSection.appendChild(qr);
+                slideSection.appendChild(video);
+                slideSection.id = 'video-section';
 
-            if (slide.answers.length) {
-                const h3 = document.createElement('h3');
-                h3.innerText = `${slide.name}-answers`
-                VotingSection.append(h3)
-                for (let answer of slide.answers) {
-                    const { option, votes } = answer;
-                    const li = document.createElement('li');
-                    li.innerText = `${option}: ${votes}`;
-                    ul.append(li)
+
+
+
+
+
+            }
+            else if (slide.type === 'audio') {
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = API_URI + "/" + slide.path;
+                slideSection.appendChild(audio);
+
+
+            }
+            else if (slide.type === 'html') {
+                slideSection.setAttribute('data-background-iframe', API_URI + "/" + slide.path);
+
+            }
+            else if (slide.type === 'question') {
+                let isVoted = false;
+                const VotingSection = document.createElement('section');
+                VotingSection.setAttribute('id', "votingSection")
+                const qr = document.createElement('div');
+                const ul = document.createElement('ul');
+                const radioUl = document.createElement('ul');
+                const form = document.createElement('form');
+                const submitButton = document.createElement('input');
+                submitButton.type = 'submit';
+                submitButton.
+                    setAttribute('class', "py-2 px-4 cursor-pointer  bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white ml-2 transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2  rounded-lg")
+                for (let opt of slide.options) {
+                    const label = document.createElement('label');
+                    const radio = document.createElement('input');
+                    radio.setAttribute('value', opt);
+                    radio.setAttribute('type', "radio");
+                    radio.setAttribute('name', slide.name);
+                    label.setAttribute('class', "flex items-center justify-center")
+                    radio.setAttribute('class', "w-10 h-10 cursor-pointer")
+                    label.append(radio)
+
+                    label.append(opt);
+                    radioUl.append(label)
                 }
-                VotingSection.append(ul)
-                slidesParent.append(slideSection)
-                slidesParent.append(VotingSection)
-            } else {
-                slidesParent.append(slideSection)
+                form.append(radioUl)
+                form.append(submitButton)
+                form.id = "answer-form"
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (isVoted) return alert("already voted !");
+                    const value = document.querySelector(`input[name="${slide.name}"]:checked`).value;;
+                    const res = await axios.get(API_URI + questionPath + `-answer/${slide._id}?answer=${value}&token=${token}`);
+                    const { data } = res;
+                    console.log(data);
+                    if (data.success) isVoted = true;
+                    alert(data.message);
+
+                })
+                qr.style.display = "inline-block"
+                new QRCode(qr, `${FRONTEND_URI}/question?ID=${slide._id}&token=${token}`)
+                h4.appendChild(qr);
+                h4.style = "display:flex;align-items:center;justify-content :space-evenly"
+                slideSection.appendChild(form)
+
+
+                if (slide.answers.length) {
+                    const h3 = document.createElement('h3');
+                    h3.innerText = `${slide.name}-answers`
+                    VotingSection.append(h3)
+                    for (let answer of slide.answers) {
+                        const { option, votes } = answer;
+                        const li = document.createElement('li');
+                        li.innerText = `${option}: ${votes}`;
+                        ul.append(li)
+                    }
+                    VotingSection.append(ul)
+                    ul.setAttribute('id', slide._id)
+                    VotingSection.setAttribute('question-id', slide._id)
+                    slidesParent.append(slideSection)
+                    slidesParent.append(VotingSection)
+                } else {
+                    slidesParent.append(slideSection)
+
+                }
+
 
             }
+            if (slide.type !== "question")
+                slidesParent.append(slideSection)
 
 
         }
-        if (slide.type !== "question")
-            slidesParent.append(slideSection)
-
-
     }
-
+    catch (err) {
+        alert(err.message)
+    }
 }
 
+
 getPresentation(presentationId)
+Reveal.on('slidechanged', async (event) => {
+    const { indexh, indexv, currentSlide } = event;
+    const questionId = currentSlide.getAttribute('question-id');
+    if (questionId) {
+        const ul = document.getElementById(questionId);
+        const res = await axios.get(API_URI + questionPath + `/${questionId}`);
+        const { data } = res;
+        const { question } = data;
+        const answers = question.answers;
+        if (answers.length) {
+            if (ul) ul.innerHTML = ""
+            for (let answer of answers) {
+                const { option, votes } = answer;
+                const li = document.createElement('li');
+                li.innerText = `${option}: ${votes}`;
+                ul.append(li)
+            }
+        }
+    }
+}
+)
+
+
 if (live) {
     socket.emit('join', token)
     Reveal.on('slidechanged', event => {
         // event.previousSlide, event.currentSlide, event.indexh, event.indexv
         const { indexh, indexv, currentSlide } = event;
         socket.emit('page-change', token, indexh, indexv, currentSlide);
-        console.log(event)
     });
 
     socket.on('server-page-change', (indexh, indexv, currentSlide) => {
-        console.log(indexh, indexv, currentSlide, "pushed here")
-        console.log(socket.rooms)
         Reveal.slide(indexh, indexv, currentSlide);
     })
 }

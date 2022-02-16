@@ -1,3 +1,12 @@
 audio{
     display: inline-block;
 }
+#video-section{
+    top: 0px;    display: flex!important;   align-items: center;   flex-direction: column;
+}
+#answer-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: column;
+}
