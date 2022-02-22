@@ -4,22 +4,26 @@ const instance = axios.create({
     baseURL: API_URI,
 
 })
-var socket = io(API_URI);
 const slidesParent = document.querySelector('.slides');
 const title = document.querySelector('title');
 const query = new URLSearchParams(window.location.search);
 const presentationId = query.get('pres');
 const token = query.get('token');
-const live = query.get('feature') === "live-share";
-
+const feature = query.get('feature');
+const live = feature === "live-share";
+const off = feature === "offline"
 const presentationPath = '/api/presentation'
 const questionPath = '/api/question'
 async function getPresentation(ID) {
+    const response = await instance.get(presentationPath + `/${ID}?token=${token}`);
+    const { data } = response;
+    return data;
+}
+async function main(ID) {
     try {
-        const response = await instance.get(presentationPath + `/${ID}?token=${token}`);
-        const { data } = response;
-        const { presention, verify } = data;
-        console.log(`Presentation response`, response)
+
+        const { presention, verify } = await getPresentation(ID)
+        console.log(`Presentation response`, presention)
         if (!verify) {
             const h3 = document.createElement('h3');
             const NameSection = document.createElement('section');
@@ -46,7 +50,7 @@ async function getPresentation(ID) {
             autoPlayMedia: false,
             slideNumber: true,
             help: true,
-
+            preloadIframes: true,
             plugins: [RevealMarkdown, RevealHighlight, RevealMenu],
 
         });
@@ -113,6 +117,7 @@ async function visualizeSlides(slides) {
             }
             else if (slide.type === 'html') {
                 slideSection.setAttribute('data-background-iframe', API_URI + "/" + slide.path);
+                fetch(API_URI + "/" + slide.path);
 
             }
             else if (slide.type === 'question') {
@@ -195,7 +200,7 @@ async function visualizeSlides(slides) {
 }
 
 
-getPresentation(presentationId)
+main(presentationId)
 Reveal.on('slidechanged', async (event) => {
     const { indexh, indexv, currentSlide } = event;
     const questionId = currentSlide.getAttribute('question-id');
@@ -218,8 +223,15 @@ Reveal.on('slidechanged', async (event) => {
 }
 )
 
+if (off && presentationId) {
+    handleOffline(presentationId)
+
+
+
+}
 
 if (live) {
+    var socket = io(API_URI);
     socket.emit('join', token)
     Reveal.on('slidechanged', event => {
         // event.previousSlide, event.currentSlide, event.indexh, event.indexv
@@ -230,4 +242,71 @@ if (live) {
     socket.on('server-page-change', (indexh, indexv, currentSlide) => {
         Reveal.slide(indexh, indexv, currentSlide);
     })
+}
+
+function saveMedia(url) {
+    const videoRequest = fetch(url).then(response => response.blob());
+    videoRequest.then(blob => {
+        const request = indexedDB.open('databaseNameHere', 1);
+
+        request.onsuccess = event => {
+            const db = event.target.result;
+
+            const transaction = db.transaction(['videos']);
+            const objectStore = transaction.objectStore('videos');
+
+            const test = objectStore.get('test');
+
+            test.onerror = event => {
+                console.log('error', event);
+            };
+
+            test.onsuccess = event => {
+                console.log('success', event);
+            };
+        }
+
+        request.onupgradeneeded = event => {
+            const db = event.target.result;
+            const objectStore = db.createObjectStore('videos', { keyPath: 'name' });
+
+            objectStore.transaction.oncomplete = event => {
+                const videoObjectStore = db.transaction('videos', 'readwrite').objectStore('videos');
+                videoObjectStore.add({ name: 'test', blob: blob });
+            };
+        }
+    });
+}
+
+async function handleOffline(ID) {
+    const { presention } = await getPresentation(ID);
+    if (presention.slides.length) {
+        for (const slide of presention.slides) {
+            const path = API_URI + "/" + slide.path;
+
+            if (slide.type === "video" || slide.type === "audio") {
+                await saveMedia(path)
+                continue;
+            }
+            if (slide.type === "html") {
+                const mainThread = (API_URI + "/" + slide.path).split('index.html')[0]
+                const iframe = document.createElement("iframes");
+                await fetch(path)
+                const scripts = iframe.querySelectorAll('script');
+                const links = iframe.querySelectorAll('link')
+                console.log(links)
+                console.log(scripts)
+                for (let link of links) {
+                    console.log(mainThread + link.href)
+                    fetch(mainThread + link.href);
+                }
+                for (let script of scripts) {
+                    fetch(mainThread + script.src);
+                }
+
+
+            }
+        }
+
+    }
 }
