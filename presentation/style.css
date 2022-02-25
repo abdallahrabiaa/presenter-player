@@ -10,3 +10,19 @@ audio{
     justify-content: space-evenly;
     flex-direction: column;
 }
+
+#answer-form label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+    
+}
+
+#answer-form ul {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: column;
+    width: 30%;
+}

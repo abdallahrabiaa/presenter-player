@@ -50,7 +50,6 @@ async function main(ID) {
             autoPlayMedia: false,
             slideNumber: true,
             help: true,
-            preloadIframes: true,
             plugins: [RevealMarkdown, RevealHighlight, RevealMenu],
 
         });
@@ -245,7 +244,7 @@ if (live) {
 }
 
 function saveMedia(url) {
-    const videoRequest = fetch(url).then(response => response.blob());
+    const videoRequest = (url).then(response => response.blob());
     videoRequest.then(blob => {
         const request = indexedDB.open('databaseNameHere', 1);
 
@@ -262,7 +261,7 @@ function saveMedia(url) {
             };
 
             test.onsuccess = event => {
-                console.log('success', event);
+                console.log('success downloaded', event);
             };
         }
 
@@ -271,6 +270,7 @@ function saveMedia(url) {
             const objectStore = db.createObjectStore('videos', { keyPath: 'name' });
 
             objectStore.transaction.oncomplete = event => {
+                console.log(event, "complete transaction")
                 const videoObjectStore = db.transaction('videos', 'readwrite').objectStore('videos');
                 videoObjectStore.add({ name: 'test', blob: blob });
             };
@@ -285,28 +285,29 @@ async function handleOffline(ID) {
             const path = API_URI + "/" + slide.path;
 
             if (slide.type === "video" || slide.type === "audio") {
-                await saveMedia(path)
-                continue;
+                try {
+                    await saveMedia(path)
+                    continue;
+                }
+                catch (e) {
+                    console.log(e.message)
+
+                }
             }
+
+
+
+
+
             if (slide.type === "html") {
-                const mainThread = (API_URI + "/" + slide.path).split('index.html')[0]
-                const iframe = document.createElement("iframes");
-                await fetch(path)
-                const scripts = iframe.querySelectorAll('script');
-                const links = iframe.querySelectorAll('link')
-                console.log(links)
-                console.log(scripts)
-                for (let link of links) {
-                    console.log(mainThread + link.href)
-                    fetch(mainThread + link.href);
-                }
-                for (let script of scripts) {
-                    fetch(mainThread + script.src);
-                }
+                fetch(API_URI + "/" + slide.path);
+
+
 
 
             }
         }
-
     }
 }
+
+
