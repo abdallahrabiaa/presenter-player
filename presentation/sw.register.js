@@ -1,7 +1,7 @@
-const q = new URLSearchParams(window.location.search);
-const id = q.get('pres');
-const offline = q.get('feature') === "offline";
-console.log(q)
+// const q = new URLSearchParams(window.location.search);
+// const id = q.get('pres');
+// const offline = q.get('feature') === "offline";
+// console.log(q)
 function register() {
     try {
 
@@ -27,7 +27,7 @@ function unregister() {
     }
 }
 window.addEventListener('DOMContentLoaded', (event) => {
-    if (offline)
-        register();
-    else unregister();
+
+    register();
+
 });

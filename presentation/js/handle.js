@@ -58,12 +58,12 @@ async function main(ID) {
     catch (err) {
         const NameSection = document.createElement('section');
         NameSection.innerText = err.message;
+        if (err.message === "Network Error") return location.reload()
         slidesParent.append(NameSection)
         if (err.response) {
             console.error(err.response);
 
         }
-        alert(err.message)
         console.error(err)
     }
     await Reveal.initialize({
@@ -77,24 +77,33 @@ async function main(ID) {
 
     });
 
+
 }
 async function visualizeSlides(slides) {
     try {
         if (!slides.length) return;
 
         for (let slide of slides) {
+            const slidePath = API_URI + "/" + slide.path;
             const slideSection = document.createElement('section');
             const h4 = document.createElement('h4');
-            if (slide.name && slide.type !== "html") {
+            if (slide.name) {
                 h4.innerText = slide.name;
                 slideSection.appendChild(h4);
             }
             if (slide.type === 'image') {
-                slideSection.setAttribute('data-background-image', API_URI + "/" + slide.path);
+                const cachedPath = await saveMedia(slidePath)
+                if (slidePath.endsWith('.pdf')) {
+                    slideSection.setAttribute('data-background-iframe', cachedPath);
+                    h4.style = "display:none;"
+                } else {
+                    slideSection.setAttribute('data-background-image', cachedPath);
+
+                }
             }
             else if (slide.type === 'video') {
                 const video = document.createElement('video');
-                video.src = API_URI + "/" + slide.path;
+                video.src = await saveMedia(slidePath);
                 video.controls = true
 
                 slideSection.appendChild(video);
@@ -109,14 +118,15 @@ async function visualizeSlides(slides) {
             else if (slide.type === 'audio') {
                 const audio = document.createElement('audio');
                 audio.controls = true;
-                audio.src = API_URI + "/" + slide.path;
+                audio.src = await saveMedia(slidePath);
                 slideSection.appendChild(audio);
 
 
             }
             else if (slide.type === 'html') {
-                slideSection.setAttribute('data-background-iframe', API_URI + "/" + slide.path);
-                fetch(API_URI + "/" + slide.path);
+                const cachedPath = slidePath
+                slideSection.setAttribute('data-background-iframe', cachedPath);
+                h4.style = "display:none"
 
             }
             else if (slide.type === 'question') {
@@ -194,7 +204,7 @@ async function visualizeSlides(slides) {
         }
     }
     catch (err) {
-        alert(err.message)
+        console.log(err.message)
     }
 }
 
@@ -222,12 +232,7 @@ Reveal.on('slidechanged', async (event) => {
 }
 )
 
-if (off && presentationId) {
-    handleOffline(presentationId)
 
-
-
-}
 
 if (live) {
     var socket = io(API_URI);
@@ -243,71 +248,11 @@ if (live) {
     })
 }
 
-function saveMedia(url) {
-    const videoRequest = (url).then(response => response.blob());
-    videoRequest.then(blob => {
-        const request = indexedDB.open('databaseNameHere', 1);
-
-        request.onsuccess = event => {
-            const db = event.target.result;
-
-            const transaction = db.transaction(['videos']);
-            const objectStore = transaction.objectStore('videos');
-
-            const test = objectStore.get('test');
-
-            test.onerror = event => {
-                console.log('error', event);
-            };
-
-            test.onsuccess = event => {
-                console.log('success downloaded', event);
-            };
-        }
-
-        request.onupgradeneeded = event => {
-            const db = event.target.result;
-            const objectStore = db.createObjectStore('videos', { keyPath: 'name' });
-
-            objectStore.transaction.oncomplete = event => {
-                console.log(event, "complete transaction")
-                const videoObjectStore = db.transaction('videos', 'readwrite').objectStore('videos');
-                videoObjectStore.add({ name: 'test', blob: blob });
-            };
-        }
-    });
+async function saveMedia(url, type = "blob") {
+    const media = await axios.get(url, { responseType: type })
+    const loadedURL = URL.createObjectURL(media.data)
+    return loadedURL;
 }
 
-async function handleOffline(ID) {
-    const { presention } = await getPresentation(ID);
-    if (presention.slides.length) {
-        for (const slide of presention.slides) {
-            const path = API_URI + "/" + slide.path;
-
-            if (slide.type === "video" || slide.type === "audio") {
-                try {
-                    await saveMedia(path)
-                    continue;
-                }
-                catch (e) {
-                    console.log(e.message)
-
-                }
-            }
-
-
-
-
-
-            if (slide.type === "html") {
-                fetch(API_URI + "/" + slide.path);
-
-
-
-
-            }
-        }
-    }
-}
 
 

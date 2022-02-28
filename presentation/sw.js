@@ -24,7 +24,6 @@ self.addEventListener("install", event => {
 // State while revalidate strategy
 self.addEventListener('fetch', event => {
     if (event.request.url.startsWith('http')) {
-        console.log(event.request)
         event.waitUntil(
             event.respondWith(
                 caches.match(event.request)
