@@ -23,6 +23,7 @@ self.addEventListener("install", event => {
 
 // State while revalidate strategy
 self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') { return; }
     if (event.request.url.startsWith('http')) {
         event.waitUntil(
             event.respondWith(

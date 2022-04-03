@@ -1,4 +1,7 @@
+
 const API_URI = `http://${window.location.hostname}:4000`;
+const currentURI = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
+console.log(currentURI);
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
     baseURL: API_URI,
@@ -9,13 +12,16 @@ const title = document.querySelector('title');
 const query = new URLSearchParams(window.location.search);
 const presentationId = query.get('pres');
 const token = query.get('token');
+const name = query.get('name');
 const feature = query.get('feature');
+const user = query.get('user');
+
 const live = feature === "live-share";
 const off = feature === "offline"
 const presentationPath = '/api/presentation'
 const questionPath = '/api/question'
 async function getPresentation(ID) {
-    const response = await instance.get(presentationPath + `/${ID}?token=${token}`);
+    const response = await instance.get(presentationPath + `/${ID}?token=${token}&name=${name}&user=${user}`);
     const { data } = response;
     return data;
 }
@@ -50,6 +56,7 @@ async function main(ID) {
             autoPlayMedia: false,
             slideNumber: true,
             help: true,
+            preloadIframes: true,
             plugins: [RevealMarkdown, RevealHighlight, RevealMenu],
 
         });
@@ -124,8 +131,31 @@ async function visualizeSlides(slides) {
 
             }
             else if (slide.type === 'html') {
-                const cachedPath = slidePath
-                slideSection.setAttribute('data-background-iframe', cachedPath);
+                const { data } = await axios.get(slidePath);
+                if (data) {
+                    const folder = slidePath.split('/index.html')[0];
+                    const parser = new DOMParser();
+                    dom = parser.parseFromString(data, "text/html");
+                    console.log(dom)
+                    const scrips = dom.querySelectorAll('script');
+                    const links = dom.querySelectorAll('link');
+
+                    for (let link of links) {
+                        const relativePath = link.href.split(currentURI)[1]
+                        link.href = folder + relativePath;
+                    }
+                    for (let script of scrips) {
+                        const relativePath = script.src.split(currentURI)[1]
+                        script.src = folder + relativePath;
+                        script.defer;
+                    }
+
+                }
+
+                const newUrl = htmlToBlob(dom)
+                slideSection.setAttribute('data-background-iframe', slidePath);
+
+
                 h4.style = "display:none"
 
             }
@@ -160,7 +190,7 @@ async function visualizeSlides(slides) {
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     if (isVoted) return alert("already voted !");
-                    const value = document.querySelector(`input[name="${slide.name}"]:checked`).value;;
+                    const value = document.querySelector(`input[name="${slide.name}"]:checked`).value;
                     const res = await axios.get(API_URI + questionPath + `-answer/${slide._id}?answer=${value}&token=${token}`);
                     const { data } = res;
                     console.log(data);
@@ -169,7 +199,12 @@ async function visualizeSlides(slides) {
 
                 })
                 qr.style.display = "inline-block"
-                new QRCode(qr, `${FRONTEND_URI}/question?ID=${slide._id}&token=${token}`)
+                const fullUrl = `${API_URI}/question?ID=${slide._id}&token=${token}`;
+                const response = await axios.post(API_URI + "/api/url", { fullUrl });
+                console.log(response);
+                const { data } = response;
+                const { shortUrl } = data;
+                new QRCode(qr, `${API_URI}/api/url/${shortUrl}`)
                 h4.appendChild(qr);
                 h4.style = "display:flex;align-items:center;justify-content :space-evenly"
                 slideSection.appendChild(form)
@@ -204,6 +239,7 @@ async function visualizeSlides(slides) {
         }
     }
     catch (err) {
+        console.error(err)
         console.log(err.message)
     }
 }
@@ -256,3 +292,18 @@ async function saveMedia(url, type = "blob") {
 
 
 
+async function saveHtml(url) {
+    var htmlContent = await axios.get(url, { responseType: "html" });
+    var html = htmlContent.data;
+
+    const saved = htmlToBlob(html);
+
+    return saved;
+}
+function htmlToBlob(document) {
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    console.log(blobUrl);
+    return blobUrl;
+};
