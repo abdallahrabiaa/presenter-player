@@ -9,7 +9,7 @@
 	<link rel="manifest" href="app.webmanifest">
 	<link rel="stylesheet" href="dist/reset.css">
 	<link rel="stylesheet" href="dist/reveal.css">
-	<link rel="stylesheet" href="dist/theme/sky.css">
+	<link rel="stylesheet" href="dist/theme/black.css">
 	<link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="style.css">
 	<link rel="icon" href="/appIcon.png" />
@@ -20,8 +20,11 @@
 	<script src="node_modules/qrcodejs/qrcode.min.js"></script>
 	<script src="node_modules/file-saver/dist/FileSaver.min.js"></script>
 	<script type="text/javascript" src="node_modules/socket.io-client/dist/socket.io.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+	<!-- <script src="/plugin/chart.js/plugin.js"></script> -->
 	<script defer src="js/handle.js"></script>
 	<script defer src="sw.register.js"></script>
+
 	<link rel="apple-touch-startup-image" href="apple-splash-2048-2732.jpg"
 		media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 	<link rel="apple-touch-startup-image" href="apple-splash-2732-2048.jpg"
@@ -81,7 +84,65 @@
 		<div class="slides">
 		</div>
 	</div>
+	<template>
+		<div class="question-container">
+			<div class="question-header">
+				<img class="logo" src="./logo.svg" alt="logo">
+				<div class="text">
+					<p class="pres-name"></p>
+					<p class="session-name"></p>
 
+				</div>
+			</div>
+			<div class="question-title-div">
+				<h4 class="question-title"></h4>
+			</div>
+			<form class="question-form">
+				<ol class="question-options">
+
+				</ol>
+				<div class="question-qr-container">
+					<p class="qr-clearify">
+						To Vote, Please scan this QR with your mobile:
+					</p>
+					<div class="question-qr">
+
+
+					</div>
+					<button type="submit"
+						class="py-2 px-4  bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white w-full transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2  rounded-lg ">
+						show results
+					</button>
+
+				</div>
+
+			</form>
+		</div>
+	</template>
+	<template id="answer-template">
+		<div class="question-container">
+			<div class="question-header">
+				<img class="logo" src="./logo.svg" alt="logo">
+				<div class="text">
+					<p class="pres-name"></p>
+					<p class="session-name"></p>
+
+				</div>
+			</div>
+			<div class="question-title-div">
+				<h4 class="question-title"></h4>
+			</div>
+			<div class="chart-parent">
+				<canvas class="chart" data-chart="pie">
+
+				</canvas>
+			</div>
+
+
+
+
+		</div>
+	</template>
 	<script src="dist/reveal.js"></script>
 	<script src="plugin/notes/notes.js"></script>
 	<script src="plugin/markdown/markdown.js"></script>

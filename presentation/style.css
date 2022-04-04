@@ -1,9 +1,14 @@
-audio{
+audio {
     display: inline-block;
 }
-#video-section{
-    top: 0px;    display: flex!important;   align-items: center;   flex-direction: column;
+
+#video-section {
+    top: 0px;
+    display: flex !important;
+    align-items: center;
+    flex-direction: column;
 }
+
 #answer-form {
     display: flex;
     align-items: center;
@@ -12,11 +17,11 @@ audio{
 }
 
 #answer-form label {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-    
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
 }
 
 #answer-form ul {
@@ -25,4 +30,98 @@ audio{
     justify-content: space-evenly;
     flex-direction: column;
     width: 30%;
+}
+
+.question-header {
+    width: 70vw !important;
+    min-width: 100%;
+    height: 10vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+}
+
+text {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+
+}
+
+.question-header>* {}
+
+.logo {
+    margin-right: auto;
+}
+
+.question-title-div {
+    width: 100vw !important;
+    min-width: 100%;
+    height: 10vh;
+    min-height: auto;
+    background: #AD9C6E;
+    display: flex;
+    align-items: center;
+    white-space: wrap;
+    text-align: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.question-container {
+    /* height: 100vh !important; */
+    min-height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.question-form {
+    min-width: 100%;
+    width: 70vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 50vh;
+}
+
+.question-qr-container {
+    width: 300px;
+    margin-top: auto;
+    background: #fff;
+    border-radius: 65px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
+    padding: 1rem;
+    margin-left: auto;
+}
+
+.question-qr-container button {
+    width: 50%;
+    background: #AD9C6E !important;
+
+}
+
+
+.qr-clearify {
+    display: block;
+    white-space: wrap;
+    color: #CE3A30;
+
+}
+
+.question-qr {
+    width: 50%;
+
+}
+
+.chart {
+    height: 500px !important;
 }
