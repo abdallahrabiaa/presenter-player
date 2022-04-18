@@ -1,5 +1,5 @@
 
-const API_URI = "https://spark-mea.com" || `http://${window.location.hostname}:4000`;
+const API_URI = "https://spark-mea.com";
 const currentURI = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
 console.log(currentURI);
 const FRONTEND_URI = 'http://localhost:3000'
