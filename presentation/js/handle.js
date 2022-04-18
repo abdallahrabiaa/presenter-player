@@ -1,5 +1,5 @@
 
-const API_URI = `http://${window.location.hostname}:4000`;
+const API_URI = "https://spark-mea.com" || `http://${window.location.hostname}:4000`;
 const currentURI = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
 console.log(currentURI);
 const FRONTEND_URI = 'http://localhost:3000'
@@ -15,13 +15,14 @@ const token = query.get('token');
 const sessionName = query.get('name');
 const feature = query.get('feature');
 const user = query.get('user');
+const views = query.get('views');
 
 const live = feature === "live-share";
 const off = feature === "offline"
 const presentationPath = '/api/presentation'
 const questionPath = '/api/question'
 async function getPresentation(ID) {
-    const response = await instance.get(presentationPath + `/${ID}?token=${token}&name=${sessionName}&user=${user}`);
+    const response = await instance.get(presentationPath + `/${ID}?token=${token}&name=${sessionName}&user=${user}&feature=${feature}&views=${views}`);
     const { data } = response;
     return data;
 }
@@ -100,18 +101,30 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 slideSection.appendChild(h4);
             }
             if (slide.type === 'image') {
-                const cachedPath = await saveMedia(slidePath)
                 if (slidePath.endsWith('.pdf')) {
-                    slideSection.setAttribute('data-background-iframe', cachedPath);
+                    slideSection.setAttribute('data-background-iframe', slidePath);
                     h4.style = "display:none;"
                 } else {
-                    slideSection.setAttribute('data-background-image', cachedPath);
+                    slideSection.setAttribute('data-background-image', slidePath);
 
                 }
+                saveMedia(slidePath).then(cachedPath => {
+                    if (slidePath.endsWith('.pdf')) {
+                        slideSection.setAttribute('data-background-iframe', cachedPath);
+                        h4.style = "display:none;"
+                    } else {
+                        slideSection.setAttribute('data-background-image', cachedPath);
+
+                    }
+                })
             }
             else if (slide.type === 'video') {
                 const video = document.createElement('video');
-                video.src = await saveMedia(slidePath);
+                video.src = slidePath;
+                saveMedia(slidePath).then(cachedPath => {
+                    video.src = cachedPath;
+
+                });
                 video.controls = true
 
                 slideSection.appendChild(video);
@@ -126,7 +139,11 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
             else if (slide.type === 'audio') {
                 const audio = document.createElement('audio');
                 audio.controls = true;
-                audio.src = await saveMedia(slidePath);
+                audio.src = slidePath;
+                saveMedia(slidePath).then(cachedPath => {
+                    audio.src = cachedPath;
+
+                });
                 slideSection.appendChild(audio);
 
 
