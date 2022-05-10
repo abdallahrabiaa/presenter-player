@@ -100,30 +100,22 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 slideSection.appendChild(h4);
             }
             if (slide.type === 'image') {
+
+                const cachedPath = await saveMedia(slidePath);
                 if (slidePath.endsWith('.pdf')) {
-                    slideSection.setAttribute('data-background-iframe', slidePath);
+                    slideSection.setAttribute('data-background-iframe', cachedPath);
                     h4.style = "display:none;"
                 } else {
-                    slideSection.setAttribute('data-background-image', slidePath);
+                    slideSection.setAttribute('data-background-image', cachedPath);
 
                 }
-                saveMedia(slidePath).then(cachedPath => {
-                    if (slidePath.endsWith('.pdf')) {
-                        slideSection.setAttribute('data-background-iframe', cachedPath);
-                        h4.style = "display:none;"
-                    } else {
-                        slideSection.setAttribute('data-background-image', cachedPath);
 
-                    }
-                })
             }
             else if (slide.type === 'video') {
                 const video = document.createElement('video');
                 video.src = slidePath;
-                saveMedia(slidePath).then(cachedPath => {
-                    video.src = cachedPath;
-
-                });
+                const cachedPath = await saveMedia(slidePath);
+                video.src = cachedPath;
                 video.controls = true
 
                 slideSection.appendChild(video);
@@ -139,37 +131,32 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 const audio = document.createElement('audio');
                 audio.controls = true;
                 audio.src = slidePath;
-                saveMedia(slidePath).then(cachedPath => {
-                    audio.src = cachedPath;
-
-                });
+                const cachedPath = await saveMedia(slidePath);
+                audio.src = cachedPath;
                 slideSection.appendChild(audio);
 
 
             }
             else if (slide.type === 'html') {
-                const { data } = await axios.get(slidePath);
-                if (data) {
-                    const folder = slidePath.split('/index.html')[0];
-                    const parser = new DOMParser();
-                    dom = parser.parseFromString(data, "text/html");
-                    console.log(dom)
-                    const scrips = dom.querySelectorAll('script');
-                    const links = dom.querySelectorAll('link');
-
-                    for (let link of links) {
-                        const relativePath = link.href.split(currentURI)[1]
-                        link.href = folder + relativePath;
-                    }
-                    for (let script of scrips) {
-                        const relativePath = script.src.split(currentURI)[1]
-                        script.src = folder + relativePath;
-                        script.defer;
-                    }
-
-                }
-
-                const newUrl = htmlToBlob(dom)
+                // const { data } = await axios.get(slidePath);
+                // if (data) {
+                //     const folder = slidePath.split('/index.html')[0];
+                //     const parser = new DOMParser();
+                //     dom = parser.parseFromString(data, "text/html");
+                //     console.log(dom)
+                //     const scrips = dom.querySelectorAll('script');
+                //     const links = dom.querySelectorAll('link');
+                //     for (let link of links) {
+                //         const relativePath = link.href.split(currentURI)[1]
+                //         link.href = folder + relativePath;
+                //     }
+                //     for (let script of scrips) {
+                //         const relativePath = script.src.split(currentURI)[1]
+                //         script.src = folder + relativePath;
+                //         script.defer;
+                //     }
+                // }
+                // const newUrl = htmlToBlob(dom)
                 slideSection.setAttribute('data-background-iframe', slidePath);
 
 
@@ -294,6 +281,7 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
     }
     catch (err) {
         console.error(err)
+        if (err.message === "Network Error") return location.reload()
         console.log(err.message)
     }
 }
