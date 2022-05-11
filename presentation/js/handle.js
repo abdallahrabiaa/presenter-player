@@ -47,7 +47,7 @@ async function main(ID) {
                 title.innerHTML = name
                 slidesParent.append(NameSection)
                 await visualizeSlides(slides, presention.name, sessionName, sessionId)
-                register();
+                // register();
 
             }
 
