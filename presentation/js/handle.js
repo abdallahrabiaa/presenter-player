@@ -47,6 +47,7 @@ async function main(ID) {
                 title.innerHTML = name
                 slidesParent.append(NameSection)
                 await visualizeSlides(slides, presention.name, sessionName, sessionId)
+                register();
 
             }
 
@@ -278,7 +279,6 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
 
 
         }
-        register();
     }
     catch (err) {
         console.error(err)
