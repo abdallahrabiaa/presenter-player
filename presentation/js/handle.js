@@ -278,6 +278,7 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
 
 
         }
+        register();
     }
     catch (err) {
         console.error(err)
@@ -500,3 +501,33 @@ function makeChart(element) {
         }
     });
 }
+
+function register() {
+    try {
+
+        navigator.serviceWorker.register('sw.js')
+
+    }
+    catch (e) {
+        console.error("Error", e)
+    }
+}
+function unregister() {
+    try {
+
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (let registration of registrations) {
+                registration.unregister()
+            }
+        })
+
+    }
+    catch (e) {
+        console.error("Error", e)
+    }
+}
+// window.addEventListener('DOMContentLoaded', (event) => {
+
+    
+
+// });
