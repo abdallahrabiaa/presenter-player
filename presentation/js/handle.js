@@ -1,5 +1,5 @@
 
-const API_URI = 'http://localhost:4000' || "https://spark-mea.com";
+const API_URI = "https://spark-mea.com";
 const currentURI = API_URI;
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
