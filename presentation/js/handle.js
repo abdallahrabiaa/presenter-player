@@ -1,5 +1,5 @@
 
-const API_URI = "https://spark-mea.com";
+const API_URI = 'http://localhost:4000' || "https://spark-mea.com";
 const currentURI = API_URI;
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
@@ -47,7 +47,6 @@ async function main(ID) {
                 title.innerHTML = name
                 slidesParent.append(NameSection)
                 await visualizeSlides(slides, presention.name, sessionName, sessionId)
-                // register();
 
             }
 
@@ -61,6 +60,10 @@ async function main(ID) {
             plugins: [RevealMarkdown, RevealHighlight, RevealMenu,],
 
         });
+        if (live) {
+            unregister()
+        } else
+            register();
         return presention;
     }
     catch (err) {
@@ -101,41 +104,56 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 slideSection.appendChild(h4);
             }
             if (slide.type === 'image') {
+                try {
+                    const cachedPath = await saveMedia(slidePath);
+                    if (slidePath.endsWith('.pdf')) {
+                        slideSection.setAttribute('data-background-iframe', cachedPath);
+                        h4.style = "display:none;"
+                    } else {
+                        slideSection.setAttribute('data-background-image', cachedPath);
 
-                const cachedPath = await saveMedia(slidePath);
-                if (slidePath.endsWith('.pdf')) {
-                    slideSection.setAttribute('data-background-iframe', cachedPath);
-                    h4.style = "display:none;"
-                } else {
-                    slideSection.setAttribute('data-background-image', cachedPath);
+                    }
 
                 }
+                catch (e) {
+                    console.error(e)
+                }
+
 
             }
             else if (slide.type === 'video') {
-                const video = document.createElement('video');
-                video.src = slidePath;
-                const cachedPath = await saveMedia(slidePath);
-                video.src = cachedPath;
-                video.controls = true
+                try {
+                    const video = document.createElement('video');
+                    video.src = slidePath;
+                    const cachedPath = await saveMedia(slidePath);
+                    console.log(cachedPath);
+                    video.src = cachedPath;
+                    video.controls = true
 
-                slideSection.appendChild(video);
-                slideSection.id = 'video-section';
+                    slideSection.appendChild(video);
+                    slideSection.id = 'video-section';
 
+                }
 
-
+                catch (e) {
+                    console.error(e)
+                }
 
 
 
             }
             else if (slide.type === 'audio') {
-                const audio = document.createElement('audio');
-                audio.controls = true;
-                audio.src = slidePath;
-                const cachedPath = await saveMedia(slidePath);
-                audio.src = cachedPath;
-                slideSection.appendChild(audio);
-
+                try {
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = slidePath;
+                    const cachedPath = await saveMedia(slidePath);
+                    audio.src = cachedPath;
+                    slideSection.appendChild(audio);
+                }
+                catch (e) {
+                    console.error(e)
+                }
 
             }
             else if (slide.type === 'html') {
@@ -158,10 +176,15 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 //     }
                 // }
                 // const newUrl = htmlToBlob(dom)
-                slideSection.setAttribute('data-background-iframe', slidePath);
+                try {
+                    slideSection.setAttribute('data-background-iframe', slidePath);
 
 
-                h4.style = "display:none"
+                    h4.style = "display:none"
+                }
+                catch (e) {
+                    console.error(e)
+                }
 
             }
             else if (slide.type === 'question') {
@@ -282,7 +305,6 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
     }
     catch (err) {
         console.error(err)
-        if (err.message === "Network Error") return location.reload()
         console.log(err.message)
     }
 }
@@ -327,7 +349,10 @@ Reveal.on('slidechanged', (event) => {
                 options: {
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
                         }
                     }
                 }
@@ -505,7 +530,7 @@ function makeChart(element) {
 function register() {
     try {
 
-        navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('../sw.js')
 
     }
     catch (e) {
@@ -519,6 +544,9 @@ function unregister() {
             for (let registration of registrations) {
                 registration.unregister()
             }
+            for (let registration of registrations) {
+                if (registration.live) window.location.reload()
+            }
         })
 
     }
@@ -526,8 +554,8 @@ function unregister() {
         console.error("Error", e)
     }
 }
-// window.addEventListener('DOMContentLoaded', (event) => {
+window.addEventListener('DOMContentLoaded', (event) => {
 
-    
+    register();
 
-// });
+});
