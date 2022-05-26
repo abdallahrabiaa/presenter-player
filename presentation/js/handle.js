@@ -1,5 +1,5 @@
 
-const API_URI = "https://spark-mea.com";
+const API_URI = 'http://localhost:4000' || "https://spark-mea.com";
 const currentURI = API_URI;
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
@@ -20,9 +20,11 @@ const live = feature === "live-share";
 const off = feature === "offline"
 const presentationPath = '/api/presentation'
 const questionPath = '/api/question'
+const sessionPath = '/api/session'
 async function getPresentation(ID) {
     const response = await instance.get(presentationPath + `/${ID}?token=${token}&name=${sessionName}&user=${user}&feature=${feature}&views=${views}`);
     const { data } = response;
+
     return data;
 }
 async function main(ID) {
@@ -124,7 +126,6 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
             else if (slide.type === 'video') {
                 try {
                     const video = document.createElement('video');
-                    video.src = slidePath;
                     const cachedPath = await saveMedia(slidePath);
                     console.log(cachedPath);
                     video.src = cachedPath;
@@ -146,7 +147,6 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 try {
                     const audio = document.createElement('audio');
                     audio.controls = true;
-                    audio.src = slidePath;
                     const cachedPath = await saveMedia(slidePath);
                     audio.src = cachedPath;
                     slideSection.appendChild(audio);
@@ -217,6 +217,7 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 title.innerHTML = slide.name;
                 VotingTitle.innerHTML = slide.name + " answers"
                 votingChart.setAttribute('id', slide._id)
+
                 const labels = [];
                 const answers = [];
                 const res = await axios.get(API_URI + questionPath + `/${slide._id}`);
@@ -243,6 +244,16 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                     type: 'bar',
                     data: stats,
                     options: {
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    // This more specific font property overrides the global property
+                                    font: {
+                                        size: 22
+                                    }
+                                }
+                            }
+                        },
                         scales: {
                             y: {
                                 beginAtZero: true
@@ -290,6 +301,7 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
 
                 })
                 VotingSection.setAttribute('question-id', slide._id)
+                VotingSection.setAttribute('session-id', sessionId)
                 //////////////////////
                 slideSection.appendChild(content);
                 VotingSection.append(answersContent)
@@ -311,66 +323,91 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
 
 
 main(presentationId)
+Chart.defaults.font.size = 24;
 Reveal.on('slidechanged', (event) => {
     const { indexh, indexv, currentSlide } = event;
     const questionId = currentSlide.getAttribute('question-id');
+    const sessionId = currentSlide.getAttribute('session-id');
+
     if (questionId) {
-        axios.get(API_URI + questionPath + `/${questionId}`).then((res) => {
+        axios.get(API_URI + sessionPath + `/${sessionId}`).then((res) => {
+
             const chartParent = document.getElementById(`c-${questionId}`);
             const votingChart = document.createElement('canvas');
             votingChart.setAttribute('class', "chart")
             chartParent.innerHTML = "";
             chartParent.append(votingChart);
             const { data } = res;
-            const { question } = data;
+            console.log(data)
+            const { session } = data;
+            const { questions } = session;
+            console.log(questions)
+            if (questions.length)
+                question = questions.find(q => q.question._id === questionId)
             questionAnswers = question.answers;
             labels = []
             answers = []
+            const datasets = [
+                {
+                    label: 'answers',
+                    data: answers,
+                    barThikness: 18,
+                    maxBarThickness: 45,
+                    backgroundColor: [],
+
+                }];
             if (questionAnswers.length) {
                 for (let answer of questionAnswers) {
                     const { option, votes } = answer;
                     labels.push(option);
                     answers.push(votes)
+                    datasets[0].backgroundColor.push(getRandomColor())
                 }
             }
 
-            const datasets = [
-                {
-                    label: 'answers',
-                    data: answers,
-                    backgroundColor: '#FFFFFF',
 
-                }];
 
             let stats = { labels, datasets };
             const myChart = new Chart(votingChart, {
                 type: 'bar',
+
                 data: stats,
                 options: {
+                    indexAxis: 'y',
+                    responsive: false,
+                    plugins: {
+                        datalabels: {
+                            font: {
+                                weight: 'bold',
+                                size: 24,
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                    },
                     scales: {
-                        y: {
+                        x: {
                             beginAtZero: true,
                             ticks: {
+                                callback: function (value) { if (value % 1 === 0) { return value; } },
+                                beginAtZero: true,
+
                                 stepSize: 1
-                            }
-                        }
+                            },
+                        },
+                        // y: {
+                        //     beginAtZero: true,
+                        //     ticks: {
+                        //         stepSize: 1
+                        //     }
+                        // }
                     }
                 }
             });
         });
 
-        // if (myChart instanceof Chart) {
-        //     myChart.destroy();
-        // }
-        // if (answers.length) {
-        //     if (ul) ul.innerHTML = ""
-        //     for (let answer of answers) {
-        //         const { option, votes } = answer;
-        //         const li = document.createElement('li');
-        //         li.innerText = `${option}: ${votes}`;
-        //         ul.append(li)
-        //     }
-        // }
+
     }
 }
 )
@@ -414,79 +451,7 @@ function htmlToBlob(document) {
     console.log(blobUrl);
     return blobUrl;
 };
-// else if (slide.type === 'question') {
-//     let isVoted = false;
-//     const VotingSection = document.createElement('section');
-//     VotingSection.setAttribute('id', "votingSection")
-//     const qr = document.createElement('div');
-//     const ol = document.createElement('ol');
-//     const radioOl = document.createElement('ol');
-//     const form = document.createElement('form');
-//     const submitButton = document.createElement('input');
-//     submitButton.type = 'submit';
-//     submitButton.
-//         setAttribute('class', "py-2 px-4 cursor-pointer  bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 focus:ring-offset-indigo-200 text-white ml-2 transition ease-in duration-200 text-center text-base font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2  rounded-lg")
-//     for (let opt of slide.options) {
-//         const label = document.createElement('label');
-//         const radio = document.createElement('input');
-//         radio.setAttribute('value', opt);
-//         radio.setAttribute('type', "radio");
-//         radio.setAttribute('name', slide.name);
-//         label.setAttribute('class', "flex items-center justify-center")
-//         radio.setAttribute('class', "w-10 h-10 cursor-pointer")
-//         label.append(radio)
 
-//         label.append(opt);
-//         radioOl.append(label)
-//     }
-//     form.append(radioOl)
-//     form.append(submitButton)
-//     form.id = "answer-form"
-//     form.addEventListener('submit', async (e) => {
-//         e.preventDefault();
-//         if (isVoted) return alert("already voted !");
-//         const value = document.querySelector(`input[name="${slide.name}"]:checked`).value;
-//         const res = await axios.get(API_URI + questionPath + `-answer/${slide._id}?answer=${value}&token=${token}`);
-//         const { data } = res;
-//         console.log(data);
-//         if (data.success) isVoted = true;
-//         alert(data.message);
-
-//     })
-//     qr.style.display = "inline-block"
-//     const fullUrl = `${API_URI}/question?ID=${slide._id}&token=${token}`;
-//     const response = await axios.post(API_URI + "/api/url", { fullUrl });
-//     console.log(response);
-//     const { data } = response;
-//     const { shortUrl } = data;
-//     new QRCode(qr, `${API_URI}/api/url/${shortUrl}`)
-//     h4.appendChild(qr);
-//     h4.style = "display:flex;align-items:center;justify-content :space-evenly"
-//     slideSection.appendChild(form)
-
-
-//     if (slide.answers.length) {
-//         const h3 = document.createElement('h3');
-//         h3.innerText = `${slide.name}-answers`
-//         VotingSection.append(h3)
-//         for (let answer of slide.answers) {
-//             const { option, votes } = answer;
-//             const li = document.createElement('li');
-//             li.innerText = `${option}: ${votes}`;
-//             ol.append(li)
-//         }
-//         VotingSection.append(ol)
-//         ol.setAttribute('id', slide._id)
-//         VotingSection.setAttribute('question-id', slide._id)
-//         slidesParent.append(slideSection)
-//         slidesParent.append(VotingSection)
-//     } else {
-//         slidesParent.append(slideSection)
-
-//     }
-
-
-// }
 
 
 function makeChart(element) {
@@ -559,3 +524,8 @@ window.addEventListener('DOMContentLoaded', (event) => {
     register();
 
 });
+function getRandomColor() {
+    const colorArray = ["#b09e70", "#c0270c", "##2aa2e6", "#f2ba03"];
+    const color = colorArray[Math.floor(Math.random() * colorArray.length - 1)];
+    return color;
+}
