@@ -1,5 +1,5 @@
 
-const API_URI = 'http://localhost:4000' || "https://spark-mea.com";
+const API_URI = "https://spark-mea.com";
 const currentURI = API_URI;
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
@@ -15,7 +15,8 @@ const sessionName = query.get('name');
 const feature = query.get('feature');
 const user = query.get('user');
 const views = query.get('views');
-
+const offline = query.get('offline');
+console.log('this is offline', Boolean(offline === "true"), offline);
 const live = feature === "live-share";
 const off = feature === "offline"
 const presentationPath = '/api/presentation'
@@ -62,7 +63,7 @@ async function main(ID) {
             plugins: [RevealMarkdown, RevealHighlight, RevealMenu,],
 
         });
-        if (live) {
+        if (live || Boolean(offline === "false")) {
             unregister()
         } else
             register();
@@ -107,14 +108,27 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
             }
             if (slide.type === 'image') {
                 try {
-                    const cachedPath = await saveMedia(slidePath);
-                    if (slidePath.endsWith('.pdf')) {
-                        slideSection.setAttribute('data-background-iframe', cachedPath);
-                        h4.style = "display:none;"
+                    if (live || Boolean(offline === "false")) {
+                        if (slidePath.endsWith('.pdf')) {
+                            slideSection.setAttribute('data-background-iframe', slidePath);
+                            h4.style = "display:none;"
+                        } else {
+                            slideSection.setAttribute('data-background-image', slidePath);
+
+                        }
+
                     } else {
-                        slideSection.setAttribute('data-background-image', cachedPath);
+                        const cachedPath = await saveMedia(slidePath);
+                        if (slidePath.endsWith('.pdf')) {
+                            slideSection.setAttribute('data-background-iframe', cachedPath);
+                            h4.style = "display:none;"
+                        } else {
+                            slideSection.setAttribute('data-background-image', cachedPath);
+
+                        }
 
                     }
+
 
                 }
                 catch (e) {
@@ -126,11 +140,18 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
             else if (slide.type === 'video') {
                 try {
                     const video = document.createElement('video');
-                    const cachedPath = await saveMedia(slidePath);
-                    console.log(cachedPath);
-                    video.src = cachedPath;
-                    video.controls = true
+                    if (live || Boolean(offline === "false")) {
 
+                        video.src = slidePath;
+
+
+
+                    } else {
+                        const cachedPath = await saveMedia(slidePath);
+                        video.src = cachedPath;
+
+                    }
+                    video.controls = true
                     slideSection.appendChild(video);
                     slideSection.id = 'video-section';
 
@@ -147,8 +168,17 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 try {
                     const audio = document.createElement('audio');
                     audio.controls = true;
-                    const cachedPath = await saveMedia(slidePath);
-                    audio.src = cachedPath;
+                    if (live || Boolean(offline === "false")) {
+
+                        audio.src = slidePath;
+
+
+
+                    } else {
+                        const cachedPath = await saveMedia(slidePath);
+                        audio.src = cachedPath;
+                    }
+
                     slideSection.appendChild(audio);
                 }
                 catch (e) {
@@ -519,11 +549,7 @@ function unregister() {
         console.error("Error", e)
     }
 }
-window.addEventListener('DOMContentLoaded', (event) => {
 
-    register();
-
-});
 function getRandomColor() {
     const colorArray = ["#b09e70", "#c0270c", "##2aa2e6", "#f2ba03"];
     const color = colorArray[Math.floor(Math.random() * colorArray.length - 1)];
