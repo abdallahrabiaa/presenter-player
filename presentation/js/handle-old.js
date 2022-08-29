@@ -1,5 +1,5 @@
 
-const API_URI = "https://spark-mea.com" || 'http://localhost:4000';
+const API_URI = "https://spark-mea.com";
 const currentURI = API_URI;
 const FRONTEND_URI = 'http://localhost:3000'
 const instance = axios.create({
@@ -236,8 +236,8 @@ async function visualizeSlides(slides, presname, sessionname, sessionId) {
                 const qr = content.querySelector('.question-qr')
                 const chartParent = answersContent.querySelector('.chart-parent')
                 chartParent.setAttribute('id', `c-${slide._id}`)
-                presName.innerHTML = `presentation name: ${presname}`;
-                votingPresName.innerHTML = `presentation name: ${presname}`;
+                presName.innerHTML = `presenation name: ${presname}`;
+                votingPresName.innerHTML = `presenation name: ${presname}`;
                 presName.style.fontSize = "1rem"
                 votingPresName.style.fontSize = "1rem"
                 sessionName.innerHTML = `session name: ${sessionname}`;
